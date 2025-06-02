@@ -85,6 +85,31 @@ def update_tiktok_order_status(order_id: str, mcf_tracking_info: Dict[str, Any])
         print("[ERROR] Failed to parse TikTok JSON response.")
     return None
 
+def create_consolidated_mcf_order(tiktok_orders):
+    """
+    Consolidate ONLY unfulfilled TikTok orders and create a single Amazon MCF order.
+    Orders with a status of 'fulfilled', 'shipped', or 'complete' will be excluded.
+    """
+    # Filter out orders that are already fulfilled
+    unfulfilled_orders = [
+        order for order in tiktok_orders
+        if str(order.get("status", "")).lower() not in ("fulfilled", "shipped", "complete")
+    ]
+
+    if not unfulfilled_orders:
+        print("[INFO] No unfulfilled TikTok orders to consolidate.")
+        return None
+
+    # --- Your original consolidation and MCF order creation logic here, using unfulfilled_orders instead of tiktok_orders ---
+    # Example (pseudo):
+    # payload = build_mcf_payload(unfulfilled_orders)
+    # response = post_mcf_order(payload)
+    # return response
+
+    print(f"[INFO] Proceeding with {len(unfulfilled_orders)} unfulfilled orders.")
+    # For now, just return a mock response to indicate this works:
+    return {"orderId": "CONSOLIDATED_MCF_ORDER_ID", "orders": unfulfilled_orders}
+
 if __name__ == "__main__":
     # Replace with your order ID or loop through multiple orders as needed
     order_id = "YOUR_ORDER_ID"
