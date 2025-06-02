@@ -10,8 +10,17 @@ def main():
         print("[INFO] No TikTok orders to process.")
         return
 
+    # Only work with unfulfilled orders
+    unfulfilled_orders = [
+        order for order in tiktok_orders
+        if str(order.get("status", "")).lower() not in ("fulfilled", "shipped", "complete")
+    ]
+    if not unfulfilled_orders:
+        print("[INFO] No unfulfilled TikTok orders to process.")
+        return
+
     # Step 2: Consolidate and create Amazon MCF order
-    mcf_response = create_consolidated_mcf_order(tiktok_orders)
+    mcf_response = create_consolidated_mcf_order(unfulfilled_orders)
     if not mcf_response or "orderId" not in mcf_response:
         print("[ERROR] Failed to create Amazon MCF order.")
         return
@@ -24,7 +33,7 @@ def main():
         print("[ERROR] Could not retrieve Amazon fulfillment status.")
         return
 
-    for tiktok_order in tiktok_orders:
+    for tiktok_order in unfulfilled_orders:
         tiktok_order_id = tiktok_order.get("order_id") or tiktok_order.get("id")
         if not tiktok_order_id:
             print("[WARNING] TikTok order missing ID, skipping...")
