@@ -1,46 +1,46 @@
-from TiktokOrders.tiktok_orders import get_tiktok_orders
-from TiktokOrders.consolidate_and_mcf import create_consolidated_mcf_order
-from TiktokOrders.fulfillment_sync import get_mcf_fulfillment_status, update_tiktok_order_status
-import json
+import logging
+from TiktokOrders.tiktok_orders import main as fetch_tiktok_orders
+from TiktokOrders.consolidate_and_mcf import main as consolidate_and_fulfill
+from TiktokOrders.fulfillment_sync import main as sync_fulfillment_status
 
 def main():
-    # Step 1: Fetch TikTok orders
-    tiktok_orders = get_tiktok_orders()
-    if not tiktok_orders:
-        print("[INFO] No TikTok orders to process.")
+    logging.basicConfig(level=logging.INFO)
+    
+    # 1. Fetch TikTok Orders
+    try:
+        logging.info("Step 1: Fetching TikTok Shop orders...")
+        result = fetch_tiktok_orders()
+        if result is False:
+            logging.error("Step 1 failed: Fetching TikTok Orders Failed.")
+            return
+        logging.info("TikTok Shop orders fetched successfully.")
+    except Exception as e:
+        logging.error(f"Step 1 failed: Fetching TikTok Orders Failed. Exception: {e}")
         return
 
-    # Only work with unfulfilled orders
-    unfulfilled_orders = [
-        order for order in tiktok_orders
-        if str(order.get("status", "")).lower() not in ("fulfilled", "shipped", "complete")
-    ]
-    if not unfulfilled_orders:
-        print("[INFO] No unfulfilled TikTok orders to process.")
+    # 2. Consolidate, fulfill, and update Amazon inventory
+    try:
+        logging.info("Step 2: Consolidating and fulfilling orders + updating Amazon inventory...")
+        result = consolidate_and_fulfill()
+        if result is False:
+            logging.error("Step 2 failed: Fulfilling and Updating Amazon Inventory failed.")
+            return
+        logging.info("Consolidation and fulfillment complete.")
+    except Exception as e:
+        logging.error(f"Step 2 failed: Fulfilling and Updating Amazon Inventory failed. Exception: {e}")
         return
 
-    # Step 2: Consolidate and create Amazon MCF order
-    mcf_response = create_consolidated_mcf_order(unfulfilled_orders)
-    if not mcf_response or "orderId" not in mcf_response:
-        print("[ERROR] Failed to create Amazon MCF order.")
+    # 3. Sync fulfillment status back to TikTok
+    try:
+        logging.info("Step 3: Syncing fulfillment status back to TikTok Shop...")
+        result = sync_fulfillment_status()
+        if result is False:
+            logging.error("Step 3 failed: The update in TikTok Shop of fulfilled orders failed.")
+            return
+        logging.info("Fulfillment status sync to TikTok complete.")
+    except Exception as e:
+        logging.error(f"Step 3 failed: The update in TikTok Shop of fulfilled orders failed. Exception: {e}")
         return
-
-    amazon_order_id = mcf_response["orderId"]
-
-    # Step 3: Track Amazon fulfillment & sync back to TikTok
-    mcf_status = get_mcf_fulfillment_status(amazon_order_id)
-    if not mcf_status:
-        print("[ERROR] Could not retrieve Amazon fulfillment status.")
-        return
-
-    for tiktok_order in unfulfilled_orders:
-        tiktok_order_id = tiktok_order.get("order_id") or tiktok_order.get("id")
-        if not tiktok_order_id:
-            print("[WARNING] TikTok order missing ID, skipping...")
-            continue
-        update_result = update_tiktok_order_status(tiktok_order_id, mcf_status)
-        print(f"[INFO] Updated TikTok order {tiktok_order_id}:")
-        print(json.dumps(update_result, indent=4))
 
 if __name__ == "__main__":
     main()
