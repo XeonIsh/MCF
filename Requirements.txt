@@ -20,6 +20,7 @@
   - SKUs (Stock Keeping Units) for products must match exactly between TikTok Shop and Amazon.
   - The system assumes your entire product portfolio is imported from Amazon, ensuring identical SKUs on both platforms.
   - **If a SKU does not match between platforms, a unique identifier should be created and mapped to ensure accurate fulfillment and inventory management.**
+    - THIS IS NOT INCLUDED IN THE CODE, ITS DOABLE BUT NOT IN THE CODE.
   - Failure to match SKUs may result in unfulfilled orders or inventory mismatches.
 
 ---
