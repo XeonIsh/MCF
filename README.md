@@ -1,108 +1,71 @@
-# TikTok to Amazon MCF Automation
+# MCF Orchestrator
 
-This repository provides a robust Python automation pipeline for integrating TikTok Seller Center orders with Amazon MCF (Multi-Channel Fulfillment), allowing you to:
+## Overview
 
-- Fetch new orders from TikTok Seller Center
-- Consolidate and create a single Amazon MCF order for all TikTok orders
-- Track Amazon fulfillment status and sync updates back to TikTok
+This repository automates the workflow of fetching orders from TikTok Shop, consolidating and fulfilling them using Amazon MCF, updating Amazon inventory, and syncing order statuses back to TikTok Shop.
 
-## Folder Structure
+---
 
+## 🚀 New Workflow Steps
+
+**The workflow is now fully orchestrated via `main.py` with improved automation and reliability:**
+
+1. **Fetch TikTok Orders (`TiktokOrders/tiktok_orders.py`):**  
+   Retrieves new and unfulfilled orders from TikTok Shop.
+
+2. **Consolidate, Fulfill, and Update Amazon Inventory (`TiktokOrders/consolidate_and_mcf.py`):**  
+   - Orders are consolidated by SKU.
+   - Fulfillment requests are placed using Amazon MCF.
+   - **NEW:** After fulfillment, the script automatically deducts the fulfilled quantities from the corresponding SKUs in your Amazon inventory.  
+     _This keeps your Amazon inventory levels in sync with TikTok sales._
+
+3. **Sync Fulfillment Status Back to TikTok (`TiktokOrders/fulfillment_sync.py`):**  
+   The status of fulfilled orders is updated in TikTok Shop to reflect their new status, closing the loop.
+
+---
+
+## Error Handling
+
+- If any step fails, the process halts and logs a clear error message indicating which step failed:
+  - If fetching TikTok orders fails, no further action is taken.
+  - If fulfillment/consolidation or Amazon inventory update fails, syncing back to TikTok does not occur.
+  - If updating TikTok order status fails, a specific error is logged.
+
+---
+
+## Orchestration (`main.py`)
+
+The new `main.py` script runs each step in sequence.  
+**If any step fails, the workflow stops and reports the specific failure.**
+
+**Example log output:**
 ```
-MCF/
-│
-├── TiktokOrders/
-│   ├── tiktok_orders.py            # Fetch orders from TikTok Seller Center
-│   ├── consolidate_and_mcf.py      # Consolidate TikTok orders & create Amazon MCF order
-│   └── fulfillment_sync.py         # Track Amazon fulfillment & update TikTok order status
-│
-└── main.py                         # Orchestrates the full workflow
+INFO: Step 1: Fetching TikTok Shop orders...
+ERROR: Step 1 failed: Fetching TikTok Orders Failed.
 ```
 
 ---
 
-## How It Works
+## How to Run
 
-1. **Fetch TikTok Orders:**  
-   Retrieves orders from TikTok using API credentials.
-
-2. **Consolidate & Place Amazon MCF Order:**  
-   Combines all TikTok orders into one order and sends it to Amazon MCF.
-
-3. **Track Fulfillment & Update TikTok:**  
-   Checks Amazon fulfillment status and posts tracking/status updates back to TikTok.
-
-The main.py script orchestrates these steps in sequence.
-
----
-
-## Getting Started
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/XeonIsh/MCF.git
-cd MCF
-```
-
-### 2. Install Python Requirements
-
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Set Environment Variables
-
-Export your credentials before running scripts (in your shell or use a `.env` manager):
-
-```bash
-export TIKTOK_ACCESS_TOKEN="your_tiktok_access_token"
-export AMAZON_ACCESS_TOKEN="your_amazon_access_token"
-export AMAZON_SELLER_ID="your_seller_id"
-export AMAZON_MARKETPLACE_ID="your_marketplace_id"
-```
-
-### 4. Run the Automation
-
+Simply execute:
 ```bash
 python main.py
 ```
 
----
-
-## File Descriptions
-
-- `TiktokOrders/tiktok_orders.py`  
-  Fetches new TikTok orders.
-
-- `TiktokOrders/consolidate_and_mcf.py`  
-  Consolidates TikTok orders and places a single Amazon MCF order.
-
-- `TiktokOrders/fulfillment_sync.py`  
-  Tracks Amazon fulfillment and updates TikTok with status/tracking.
-
-- `main.py`  
-  Runs the whole workflow in order.
+All steps will be performed in order. Check the logs for status and error messages.
 
 ---
 
-## Customization & Extending
+## Summary of Changes
 
-- Modular design—add more integrations or logic as needed.
-- Each script can be run independently for testing or troubleshooting.
-
----
-
-## Requirements
-
-- Python 3.7+
-- [requests](https://pypi.org/project/requests/)
+- **Amazon inventory is now automatically updated** after fulfilling TikTok orders.
+- **Strict step-by-step orchestration**: each phase must succeed before the next begins.
+- **Clear error reporting** on failure at any stage.
 
 ---
 
-## License
-
-MIT License (see [LICENSE](LICENSE) file)
+Feel free to reach out for support or to suggest improvements!
 
 ---
 
