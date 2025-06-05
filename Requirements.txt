@@ -1,1 +1,72 @@
-requests>=2.25.0
+# Requirements
+
+## Essential Connectivity
+
+- **Amazon API Connection:**  
+  - The workflow requires a working connection to the Amazon MCF API.
+  - **If the Amazon API is not connected or not properly configured, no fulfillment or inventory update actions will be performed.**
+  - The script will halt and log an error if Amazon connectivity is missing.
+
+- **TikTok Shop API Connection:**  
+  - The workflow requires a valid connection to the TikTok Shop API.
+  - **If the TikTok Shop API is not connected or not properly configured, no order fetching, status updates, or related actions will be performed.**
+  - The script will halt and log an error if TikTok connectivity is missing.
+
+---
+
+## SKU Matching
+
+- **SKU Consistency:**  
+  - SKUs (Stock Keeping Units) for products must match exactly between TikTok Shop and Amazon.
+  - The system assumes your entire product portfolio is imported from Amazon, ensuring identical SKUs on both platforms.
+  - **If a SKU does not match between platforms, a unique identifier should be created and mapped to ensure accurate fulfillment and inventory management.**
+  - Failure to match SKUs may result in unfulfilled orders or inventory mismatches.
+
+---
+
+## Python Library Dependencies
+
+The following Python libraries are required to run the workflow scripts:
+
+- `requests`  
+  For making HTTP requests to TikTok Shop API and Amazon MCF API.
+
+- `logging`  
+  For standardized logging and error reporting across all scripts.
+
+- `os`  
+  For environment variable and file path management.
+
+- `json`  
+  For parsing and serializing JSON data to and from the APIs.
+
+- `time`  
+  For handling delays, rate limiting, and time-based operations.
+
+- `datetime`  
+  For timestamp processing and date comparisons.
+
+- `typing`  
+  For type hints and static code analysis.
+
+- `dotenv` (if using environment files)  
+  For loading environment variables from a `.env` file.  
+  _Install with:_  
+  ```bash
+  pip install python-dotenv
+  ```
+
+> **Install all dependencies using:**
+> ```bash
+> pip install requests python-dotenv
+> ```
+> *(Standard libraries such as `logging`, `os`, `json`, `time`, `datetime`, and `typing` are included with Python 3.x and do not require installation.)*
+
+---
+
+## Additional Notes
+
+- Ensure all API credentials and endpoints are up to date and valid before running the workflow.
+- Review logs regularly to catch connectivity or SKU-matching errors early.
+
+---
