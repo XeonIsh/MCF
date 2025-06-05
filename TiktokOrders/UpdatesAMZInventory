@@ -1,0 +1,69 @@
+import json
+import logging
+import os
+from amazon_api_client import update_inventory
+
+FULFILLED_ORDERS_FILE = "TiktokOrders/fulfilled_orders.json"
+
+def load_fulfilled_orders(filepath):
+    with open(filepath, "r") as f:
+        return json.load(f)
+
+def main():
+    logging.basicConfig(
+        format='%(asctime)s %(levelname)s: %(message)s',
+        level=logging.INFO
+    )
+    try:
+        fulfilled_orders = load_fulfilled_orders(FULFILLED_ORDERS_FILE)
+    except Exception as e:
+        logging.error(f"Failed to load fulfilled orders file: {e}")
+        return
+
+    sku_sales = {}
+    total_items = 0
+    for order in fulfilled_orders:
+        for item in order.get("items", []):
+            sku = item.get("sku")
+            qty = item.get("quantity", 0)
+            if not sku or qty <= 0:
+                logging.warning(f"Order item with invalid SKU or quantity: {item}")
+                continue
+            sku_sales[sku] = sku_sales.get(sku, 0) + qty
+            total_items += qty
+
+    if not sku_sales:
+        logging.info("No fulfilled orders to process for inventory update.")
+        return
+
+    all_success = True
+    failed_skus = []
+    for sku, total_sold in sku_sales.items():
+        logging.info(f"Updating Amazon inventory for SKU {sku}: subtracting {total_sold}")
+        result = update_inventory(sku, total_sold)
+        if result:
+            logging.info(f"Successfully updated inventory for {sku}")
+        else:
+            logging.error(f"Failed to update inventory for {sku}")
+            all_success = False
+            failed_skus.append(sku)
+
+    # Validation summary
+    success_count = len(sku_sales) - len(failed_skus)
+    logging.info(f"Inventory update summary: {success_count} succeeded, {len(failed_skus)} failed, {total_items} items processed.")
+
+    if failed_skus:
+        logging.warning(f"Failed SKUs: {failed_skus}")
+
+    # Delete the file only if all updates succeeded
+    if all_success:
+        try:
+            os.remove(FULFILLED_ORDERS_FILE)
+            logging.info(f"Deleted {FULFILLED_ORDERS_FILE} after successful update.")
+        except Exception as e:
+            logging.error(f"Failed to delete {FULFILLED_ORDERS_FILE}: {e}")
+    else:
+        logging.warning(f"Not deleting {FULFILLED_ORDERS_FILE} due to update errors. Please investigate failed SKUs.")
+
+if __name__ == "__main__":
+    main()
